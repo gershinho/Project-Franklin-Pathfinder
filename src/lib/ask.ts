@@ -1,15 +1,26 @@
 import { supabase } from "./supabaseClient";
 
+export type ClassifiedProcess = {
+  phase: number;
+  process: number;
+  phase_name: string;
+  process_name: string;
+};
+
+export type AskSource = {
+  source: number;
+  file: string;
+  refs: string[];
+  similarity: number;
+  preview: string;
+};
+
 export type AskResponse = {
   answer: string;
-  // Optional; depends on your edge function implementation.
-  sources?: Array<{
-    id?: string;
-    path?: string;
-    title?: string;
-    content?: string;
-    score?: number;
-  }>;
+  classified?: ClassifiedProcess[];
+  framework_refs_used?: string[];
+  was_filtered?: boolean;
+  sources?: AskSource[];
 };
 
 function formatSupabaseFunctionError(error: unknown): string {
