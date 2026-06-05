@@ -24,17 +24,7 @@ export default function App() {
   const [isResumeBuilderOpen, setIsResumeBuilderOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [viewingFile, setViewingFile] = useState<{ id: string; name: string; type: string } | null>(null);
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
-  const [isReviewSubmitted, setIsReviewSubmitted] = useState(false);
-  const [taskProgress, setTaskProgress] = useState(1); // 1 = Review Files, 2 = AI Approval, 3 = Complete
-  const [activeTaskModal, setActiveTaskModal] = useState<number | null>(null);
   const [isWorkspaceVisible, setIsWorkspaceVisible] = useState(true);
-
-  const tasks = [
-    { id: 1, title: "Review Materials", description: "Review and edit your drafted resume and interview prep notes.", modalContent: "Your resume and cover letter drafts are ready for review. Make any final tweaks before the AI alignment check." },
-    { id: 2, title: "AI Alignment Check", description: "Upload modified documents for AI feedback.", modalContent: "The AI evaluates your uploaded documents against the target job description to ensure maximum alignment and correct formatting." },
-    { id: 3, title: "Ready to Apply", description: "Final submission and application generation.", modalContent: "Your materials are perfectly aligned! You are ready to export your finalized documents and submit your application to the employer." }
-  ];
   
   const fullText = responseText;
 
@@ -89,22 +79,14 @@ export default function App() {
     }
   };
 
-  const handleSubmitForReview = () => {
-    setIsSubmittingReview(true);
-    setTimeout(() => {
-      setIsSubmittingReview(false);
-      setIsReviewSubmitted(true);
-      setTaskProgress(2); // Move to next step on upload approval
-      setTimeout(() => setIsReviewSubmitted(false), 3000);
-    }, 1500);
-  };
+
 
   return (
     <div 
       className="min-h-screen bg-white relative overflow-hidden font-sans"
       style={{
-        backgroundImage: "radial-gradient(rgba(23, 60, 122, 0.08) 1.5px, transparent 1.5px)",
-        backgroundSize: "28px 28px"
+        backgroundImage: "radial-gradient(circle, rgba(23, 60, 122, 0.15) 1.5px, transparent 1.5px)",
+        backgroundSize: "24px 24px"
       }}
     >
       {/* Top Right Navigation */}
@@ -134,9 +116,7 @@ export default function App() {
             </motion.span>
           </AnimatePresence>
         </div>
-        <button className="bg-[#306FB8] hover:bg-[#173C7A] text-white px-4 py-2 rounded-lg transition-colors">
-          take aim
-        </button>
+
         <div className="relative">
           <button 
             onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
@@ -205,7 +185,7 @@ export default function App() {
           style={{
             left: isSearching ? "1.5rem" : "50%",
             top: isSearching ? "1.5rem" : "50%",
-            transform: isSearching ? "translate(0, 0) scale(0.85)" : "translate(-50%, -120px) scale(1)",
+            transform: isSearching ? "translate(0, 0) scale(0.65)" : "translate(-50%, -120px) scale(1)",
             transformOrigin: "top left"
           }}
         >
@@ -311,86 +291,9 @@ export default function App() {
                       </motion.div>
                     )}
 
-                    <motion.div 
-                      layout
-                      initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}
-                      onClick={() => setIsResumeBuilderOpen(true)}
-                      className="bg-white border border-[#173C7A]/10 p-4 rounded-xl shadow-sm hover:shadow-md hover:border-[#306FB8]/30 transition-all cursor-pointer flex items-center gap-4 group relative overflow-hidden"
-                    >
-                  <div className="bg-[#306FB8]/10 p-3 rounded-lg text-[#306FB8] group-hover:scale-110 transition-transform">
-                    <FileText size={24} />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-[#173C7A] font-medium text-sm">Resume_Draft.pdf</h4>
-                    <p className="text-xs text-gray-500 mt-0.5">Updated 2 mins ago</p>
-                  </div>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-[#306FB8] text-white text-xs px-3 py-1.5 rounded-md flex items-center gap-1.5 shadow-sm absolute right-4">
-                    <Pencil size={12} />
-                    Edit
-                  </div>
-                </motion.div>
-                
-                <motion.div 
-                  initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
-                  onClick={() => setViewingFile({ id: 'prep', name: 'Interview_Prep.docx', type: 'document' })}
-                  className="bg-white border border-[#173C7A]/10 p-4 rounded-xl shadow-sm hover:shadow-md hover:border-[#306FB8]/30 transition-all cursor-pointer flex items-center gap-4 group relative overflow-hidden"
-                >
-                  <div className="bg-[#306FB8]/10 p-3 rounded-lg text-[#306FB8] group-hover:scale-110 transition-transform">
-                    <FileText size={24} />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-[#173C7A] font-medium text-sm">Interview_Prep.docx</h4>
-                    <p className="text-xs text-gray-500 mt-0.5">Career coaching notes</p>
-                  </div>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-[#306FB8] text-white text-xs px-3 py-1.5 rounded-md flex items-center gap-1.5 shadow-sm absolute right-4">
-                    <Eye size={12} />
-                    View
-                  </div>
-                </motion.div>
 
-                <motion.div 
-                  initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}
-                  onClick={() => setViewingFile({ id: 'roadmap', name: 'Career_Roadmap.png', type: 'image' })}
-                  className="bg-white border border-[#173C7A]/10 p-4 rounded-xl shadow-sm hover:shadow-md hover:border-[#306FB8]/30 transition-all cursor-pointer flex items-center gap-4 group relative overflow-hidden"
-                >
-                  <div className="bg-[#306FB8]/10 p-3 rounded-lg text-[#306FB8] group-hover:scale-110 transition-transform">
-                    <ImageIcon size={24} />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-[#173C7A] font-medium text-sm">Career_Roadmap.png</h4>
-                    <p className="text-xs text-gray-500 mt-0.5">Visual timeline</p>
-                  </div>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-[#306FB8] text-white text-xs px-3 py-1.5 rounded-md flex items-center gap-1.5 shadow-sm absolute right-4">
-                    <Eye size={12} />
-                    View
-                  </div>
-                </motion.div>
 
-                {/* Upload Box */}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}
-                  className="mt-2 border-2 border-dashed border-[#173C7A]/20 rounded-xl pt-6 pb-12 px-6 flex flex-col items-center justify-center text-center hover:bg-[#306FB8]/5 hover:border-[#306FB8]/50 transition-colors cursor-pointer group bg-white/50 backdrop-blur-sm relative"
-                >
-                  <div className="bg-[#306FB8]/10 p-3 rounded-full text-[#306FB8] group-hover:scale-110 transition-transform mb-3">
-                    <UploadCloud size={24} />
-                  </div>
-                  <h4 className="text-[#173C7A] font-medium text-sm">Upload new files</h4>
-                  <p className="text-xs text-gray-500 mt-1">Drag & drop or click to browse</p>
 
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleSubmitForReview(); }}
-                    disabled={isSubmittingReview || isReviewSubmitted}
-                    className="absolute bottom-3 right-3 bg-[#173C7A] hover:bg-[#0f2852] text-white px-3 py-1.5 rounded-md text-xs font-medium transition-all shadow-sm hover:shadow flex items-center justify-center gap-1.5 disabled:opacity-90 disabled:cursor-not-allowed z-10"
-                  >
-                    {isSubmittingReview ? (
-                      <><Loader2 className="animate-spin" size={12} /> Sending...</>
-                    ) : isReviewSubmitted ? (
-                      <><CheckCircle2 size={12} /> Sent</>
-                    ) : (
-                      "Submit"
-                    )}
-                  </button>
-                </motion.div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -398,54 +301,9 @@ export default function App() {
               {/* Generative response text */}
               <motion.div 
                 layout
-                className="flex flex-col gap-6 w-full min-h-0"
+                className="flex flex-col w-full min-h-0"
                 transition={{ duration: 0.4, ease: "easeInOut" }}
               >
-                {/* Task Progress Bar - Circular Steps */}
-                <AnimatePresence>
-                  {isWorkspaceVisible && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: -10, height: 0, overflow: 'hidden' }} 
-                      animate={{ opacity: 1, y: 0, height: 'auto', overflow: 'visible' }} 
-                      exit={{ opacity: 0, y: -10, height: 0, overflow: 'hidden' }}
-                      transition={{ duration: 0.3 }}
-                      className="bg-white/80 backdrop-blur-sm border border-[#173C7A]/10 rounded-2xl p-2.5 shadow-sm flex items-center w-fit gap-3"
-                    >
-                  <span className="text-sm font-semibold text-[#173C7A] ml-2">Worksheets:</span>
-                  <div className="flex items-center gap-2 relative z-10">
-                    {tasks.map((task) => {
-                      const isCompleted = taskProgress > task.id;
-                      const isCurrent = taskProgress === task.id;
-                      return (
-                        <React.Fragment key={task.id}>
-                          <div className="relative group flex items-center justify-center cursor-pointer">
-                            <button
-                              onClick={() => setActiveTaskModal(task.id)}
-                              className={`w-9 h-9 rounded-full flex items-center justify-center font-medium transition-all duration-300 shadow-sm z-10 ${
-                                isCompleted
-                                  ? 'bg-[#306FB8] text-white border-2 border-[#306FB8]'
-                                  : isCurrent
-                                  ? 'bg-white text-[#306FB8] border-2 border-[#306FB8] ring-4 ring-[#306FB8]/20'
-                                  : 'bg-white text-gray-400 border-2 border-gray-200 hover:border-[#306FB8]/50'
-                              }`}
-                            >
-                              {isCompleted ? <Check size={16} strokeWidth={3} /> : task.id}
-                            </button>
-
-                            {/* Hover Tooltip */}
-                            <div className="absolute bottom-11 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none w-max bg-[#173C7A] text-white text-xs px-3 py-2 rounded-lg shadow-xl z-50 text-center">
-                              <p className="font-semibold">{task.title}</p>
-                              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#173C7A] rotate-45"></div>
-                            </div>
-                          </div>
-                        </React.Fragment>
-                      );
-                    })}
-                  </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
                 <div className="bg-gradient-to-br from-white to-[#306FB8]/[0.03] rounded-2xl border border-[#173C7A]/10 flex-1 min-h-0 shadow-sm relative overflow-hidden flex flex-col">
                   <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#306FB8] to-[#173C7A] opacity-80"></div>
                   <div className="flex items-center justify-between px-8 pt-7 pb-4 border-b border-[#173C7A]/5">
@@ -640,52 +498,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Task Detail Modal */}
-      <AnimatePresence>
-        {activeTaskModal !== null && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/20 backdrop-blur-sm"
-              onClick={() => setActiveTaskModal(null)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl relative z-10 border border-[#173C7A]/10"
-            >
-              <button
-                onClick={() => setActiveTaskModal(null)}
-                className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
-              >
-                <X size={20} />
-              </button>
-              {(() => {
-                const task = tasks.find(t => t.id === activeTaskModal);
-                return task ? (
-                  <>
-                    <div className="w-12 h-12 rounded-xl bg-[#306FB8]/10 text-[#306FB8] flex items-center justify-center mb-4">
-                      {task.id === 1 ? <FileSearch size={24} /> : task.id === 2 ? <Shield size={24} /> : <CheckCircle2 size={24} />}
-                    </div>
-                    <h3 className="text-xl font-bold text-[#173C7A] mb-2">{task.title}</h3>
-                    <p className="text-gray-600 mb-6 text-sm leading-relaxed">{task.modalContent}</p>
-                    
-                    <div className="flex justify-end">
-                      <button
-                        onClick={() => setActiveTaskModal(null)}
-                        className="bg-[#173C7A] hover:bg-[#0f2852] text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors"
-                      >
-                        Got it
-                      </button>
-                    </div>
-                  </>
-                ) : null;
-              })()}
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+
     </div>
   );
 }
