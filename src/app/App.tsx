@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { FileText, Image as ImageIcon, Search, Pencil, Eye, Settings, User, LogOut, FileSearch, Shield, UploadCloud, Loader2, CheckCircle2, Check, X, Maximize2, Minimize2, Activity, Tags, BookOpen } from "lucide-react";
+import { FileText, Image as ImageIcon, Search, Pencil, Eye, Settings, User, LogOut, FileSearch, Shield, UploadCloud, Loader2, CheckCircle2, Check, X, Maximize2, Minimize2, Activity, Tags, BookOpen, ExternalLink } from "lucide-react";
 import logo from "../imports/image.png";
 import { ResumeBuilder } from "./components/ResumeBuilder";
 import { FileViewer } from "./components/FileViewer";
-import { ask, type AskSource, type ClassifiedProcess } from "@/lib/ask";
+import { ask, stripWorksheetFromAnswer, type AskSource, type ClassifiedProcess } from "@/lib/ask";
 import { FormattedAnswer } from "./components/FormattedAnswer";
 
 export default function App() {
@@ -21,6 +21,7 @@ export default function App() {
   const [responseClassified, setResponseClassified] = useState<ClassifiedProcess[]>([]);
   const [responseFrameworkRefs, setResponseFrameworkRefs] = useState<string[]>([]);
   const [responseWasFiltered, setResponseWasFiltered] = useState<boolean | null>(null);
+  const [responseWorksheets, setResponseWorksheets] = useState<string[]>([]);
   const [isResumeBuilderOpen, setIsResumeBuilderOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [viewingFile, setViewingFile] = useState<{ id: string; name: string; type: string } | null>(null);
@@ -60,10 +61,13 @@ export default function App() {
     setResponseClassified([]);
     setResponseFrameworkRefs([]);
     setResponseWasFiltered(null);
+    setResponseWorksheets([]);
 
     try {
       const res = await ask(queryToAsk);
-      setResponseText(res.answer);
+      const worksheets = res.worksheets ?? [];
+      setResponseWorksheets(worksheets);
+      setResponseText(stripWorksheetFromAnswer(res.answer, worksheets));
       setResponseSources(res.sources ?? []);
       setResponseClassified(res.classified ?? []);
       setResponseFrameworkRefs(res.framework_refs_used ?? []);
@@ -341,6 +345,37 @@ export default function App() {
                             text={typedText}
                             isTyping={isAsking || typedText.length < fullText.length}
                           />
+                          {responseWorksheets.length > 0 &&
+                            !isAsking &&
+                            typedText.length >= fullText.length && (
+                              <div className="mt-8 rounded-xl border border-[#306FB8]/25 bg-gradient-to-br from-[#306FB8]/8 to-[#173C7A]/5 p-5 shadow-sm">
+                                <div className="flex items-center gap-2 mb-3">
+                                  <FileText size={18} className="text-[#306FB8]" />
+                                  <h4 className="text-sm font-semibold text-[#173C7A]">
+                                    Your Next Step
+                                  </h4>
+                                </div>
+                                <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                                  Work through the program worksheet to put this advice into practice.
+                                </p>
+                                <div className="flex flex-col gap-2">
+                                  {responseWorksheets.map((url, i) => (
+                                    <a
+                                      key={url}
+                                      href={url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#306FB8] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#173C7A]"
+                                    >
+                                      <ExternalLink size={16} />
+                                      {responseWorksheets.length === 1
+                                        ? "Open worksheet"
+                                        : `Open worksheet ${i + 1}`}
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           {responseSources.length > 0 &&
                             !isAsking &&
                             typedText.length >= fullText.length && (

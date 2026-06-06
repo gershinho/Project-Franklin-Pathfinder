@@ -21,7 +21,27 @@ export type AskResponse = {
   framework_refs_used?: string[];
   was_filtered?: boolean;
   sources?: AskSource[];
+  worksheets?: string[];
 };
+
+/** Remove worksheet URLs (and the trailing "next step" line) from the answer body. */
+export function stripWorksheetFromAnswer(
+  answer: string,
+  worksheets: string[]
+): string {
+  if (!worksheets.length) return answer;
+
+  let text = answer;
+  for (const url of worksheets) {
+    text = text.replaceAll(url, "");
+  }
+  text = text.replace(
+    /\n*Your next step:\s*work through this worksheet\s*→\s*/gi,
+    ""
+  );
+  text = text.replace(/\n*Your next step:[^\n]*/gi, "");
+  return text.replace(/\s*→\s*$/g, "").trim();
+}
 
 function formatSupabaseFunctionError(error: unknown): string {
   if (!(error && typeof error === "object")) {
