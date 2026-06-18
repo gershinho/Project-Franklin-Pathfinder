@@ -24,7 +24,7 @@ export type AskResponse = {
   worksheets?: string[];
 };
 
-/** Remove worksheet URLs (and the trailing "next step" line) from the answer body. */
+/** Remove worksheet URLs from the answer body; keeps the AI's next-step task text. */
 export function stripWorksheetFromAnswer(
   answer: string,
   worksheets: string[]
@@ -34,13 +34,14 @@ export function stripWorksheetFromAnswer(
   let text = answer;
   for (const url of worksheets) {
     text = text.replaceAll(url, "");
+    const escaped = url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    text = text.replace(new RegExp(`\\[([^\\]]*)\\]\\(${escaped}\\)`, "gi"), "");
   }
-  text = text.replace(
-    /\n*Your next step:\s*work through this worksheet\s*→\s*/gi,
-    ""
-  );
-  text = text.replace(/\n*Your next step:[^\n]*/gi, "");
-  return text.replace(/\s*→\s*$/g, "").trim();
+  // Drop orphaned arrows that pointed at the worksheet link
+  text = text.replace(/\s*→\s*(?=\n|$)/g, "");
+  return text
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 function formatSupabaseFunctionError(error: unknown): string {

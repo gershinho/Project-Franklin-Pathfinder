@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { FileText, Image as ImageIcon, Search, Pencil, Eye, Settings, User, LogOut, FileSearch, Shield, UploadCloud, Loader2, CheckCircle2, Check, X, Maximize2, Minimize2, Activity, Tags, BookOpen, ExternalLink } from "lucide-react";
+import { Image as ImageIcon, Search, Pencil, Eye, Settings, User, LogOut, FileSearch, Shield, UploadCloud, Loader2, CheckCircle2, Check, X, Maximize2, Minimize2, Activity, Tags, BookOpen } from "lucide-react";
 import logo from "../imports/image.png";
 import { ResumeBuilder } from "./components/ResumeBuilder";
 import { FileViewer } from "./components/FileViewer";
 import { ask, stripWorksheetFromAnswer, type AskSource, type ClassifiedProcess } from "@/lib/ask";
+import { extractAssignmentUrls } from "@/lib/assignmentLinks";
 import { FormattedAnswer } from "./components/FormattedAnswer";
+import { AssignmentTile } from "./components/AssignmentTile";
 
 export default function App() {
   const [isShelfOpen, setIsShelfOpen] = useState(false);
@@ -65,7 +67,12 @@ export default function App() {
 
     try {
       const res = await ask(queryToAsk);
-      const worksheets = res.worksheets ?? [];
+      const worksheets = [
+        ...new Set([
+          ...(res.worksheets ?? []),
+          ...extractAssignmentUrls(res.answer),
+        ]),
+      ];
       setResponseWorksheets(worksheets);
       setResponseText(stripWorksheetFromAnswer(res.answer, worksheets));
       setResponseSources(res.sources ?? []);
@@ -341,41 +348,28 @@ export default function App() {
                     {typedText || isAsking ? (
                       typedText ? (
                         <>
-                          <FormattedAnswer
-                            text={typedText}
-                            isTyping={isAsking || typedText.length < fullText.length}
-                          />
-                          {responseWorksheets.length > 0 &&
-                            !isAsking &&
-                            typedText.length >= fullText.length && (
-                              <div className="mt-8 rounded-xl border border-[#306FB8]/25 bg-gradient-to-br from-[#306FB8]/8 to-[#173C7A]/5 p-5 shadow-sm">
-                                <div className="flex items-center gap-2 mb-3">
-                                  <FileText size={18} className="text-[#306FB8]" />
-                                  <h4 className="text-sm font-semibold text-[#173C7A]">
-                                    Your Next Step
-                                  </h4>
-                                </div>
-                                <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                                  Work through the program worksheet to put this advice into practice.
-                                </p>
-                                <div className="flex flex-col gap-2">
-                                  {responseWorksheets.map((url, i) => (
-                                    <a
-                                      key={url}
-                                      href={url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#306FB8] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#173C7A]"
-                                    >
-                                      <ExternalLink size={16} />
-                                      {responseWorksheets.length === 1
-                                        ? "Open worksheet"
-                                        : `Open worksheet ${i + 1}`}
-                                    </a>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
+                          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
+                            <div className="min-w-0 flex-1">
+                              <FormattedAnswer
+                                text={typedText}
+                                isTyping={isAsking || typedText.length < fullText.length}
+                              />
+                            </div>
+                            {responseWorksheets.length > 0 &&
+                              !isAsking &&
+                              typedText.length >= fullText.length && (
+                                <aside className="shrink-0 sm:pt-1">
+                                  <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-wider text-[#306FB8]/70">
+                                    Your next step
+                                  </p>
+                                  <div className="flex flex-wrap gap-3 sm:flex-col">
+                                    {responseWorksheets.map((url, i) => (
+                                      <AssignmentTile key={url} url={url} index={i} />
+                                    ))}
+                                  </div>
+                                </aside>
+                              )}
+                          </div>
                           {responseSources.length > 0 &&
                             !isAsking &&
                             typedText.length >= fullText.length && (

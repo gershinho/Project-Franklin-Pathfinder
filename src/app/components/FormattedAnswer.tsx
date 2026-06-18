@@ -1,4 +1,6 @@
 import React from "react";
+import { AssignmentTile } from "./AssignmentTile";
+import { isAssignmentUrl } from "@/lib/assignmentLinks";
 
 type InlineSegment =
   | { type: "text"; content: string }
@@ -64,6 +66,16 @@ function renderInline(text: string): React.ReactNode[] {
           </code>
         );
       case "link":
+        if (isAssignmentUrl(seg.href)) {
+          return (
+            <AssignmentTile
+              key={i}
+              url={seg.href}
+              title={seg.content}
+              variant="inline"
+            />
+          );
+        }
         return (
           <a
             key={i}
