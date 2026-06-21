@@ -1,16 +1,30 @@
+# Archer UX [1]
 
-  # Archer UX [1]
+Design bundle from [Figma — Archer UX [1]](https://www.figma.com/design/MJtojKgqmnxodW8neWQ7mX/Archer-UX--1-). React + Vite frontend that calls a Supabase Edge Function (`ask`) for search and Q&A.
 
-  This is a code bundle for Archer UX [1]. The original project is available at https://www.figma.com/design/MJtojKgqmnxodW8neWQ7mX/Archer-UX--1-.
+## Setup
 
-  ## Running the code
+Install dependencies:
 
-  Run `npm i` to install the dependencies.
+```bash
+npm i
+```
 
-Create a `.env` file (see `.env.example`) and set:
+Copy `.env.example` to `.env` and set:
 
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
+- `VITE_SUPABASE_URL` — project URL (e.g. `https://<project-ref>.supabase.co`; do not include `/rest/v1`)
+- `VITE_SUPABASE_ANON_KEY` — anon/public API key from your Supabase project settings
 
-  Run `npm run dev` to start the development server.
-  
+## Development
+
+```bash
+npm run dev
+```
+
+## Production build
+
+```bash
+npm run build
+```
+
+Built assets are written to `dist/`.
