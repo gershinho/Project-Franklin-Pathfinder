@@ -1,4 +1,4 @@
-# Archer UX [1]
+# Project Franklin Pathfinder
 
 Design bundle from [Figma — Archer UX [1]](https://www.figma.com/design/MJtojKgqmnxodW8neWQ7mX/Archer-UX--1-). React + Vite frontend that calls a Supabase Edge Function (`ask`) for search and Q&A.
 
