@@ -4,13 +4,14 @@ import { Image as ImageIcon, Search, Pencil, Eye, Settings, User, LogOut, FileSe
 import logo from "../imports/image.png";
 import { ResumeBuilder } from "./components/ResumeBuilder";
 import { FileViewer } from "./components/FileViewer";
-import { ask, stripWorksheetFromAnswer, type AskSource, type ClassifiedProcess } from "@/lib/ask";
+import { ask, type AskSource, type ClassifiedProcess } from "@/lib/ask";
 import { extractAssignmentUrls } from "@/lib/assignmentLinks";
 import { FormattedAnswer } from "./components/FormattedAnswer";
-import { AssignmentTile } from "./components/AssignmentTile";
 import { Roadmap } from "./components/Roadmap";
+import { LandingPage } from "./components/LandingPage";
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentView, setCurrentView] = useState<"pathfinder" | "roadmap">("pathfinder");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
@@ -19,7 +20,6 @@ export default function App() {
   const [responseText, setResponseText] = useState("");
   const [isAsking, setIsAsking] = useState(false);
   const [askError, setAskError] = useState<string | null>(null);
-  const [searchCount, setSearchCount] = useState(0);
   const [lastQuery, setLastQuery] = useState("");
   const [responseSources, setResponseSources] = useState<AskSource[]>([]);
   const [responseClassified, setResponseClassified] = useState<ClassifiedProcess[]>([]);
@@ -29,7 +29,6 @@ export default function App() {
   const [isResumeBuilderOpen, setIsResumeBuilderOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [viewingFile, setViewingFile] = useState<{ id: string; name: string; type: string } | null>(null);
-  const [isWorkspaceVisible, setIsWorkspaceVisible] = useState(true);
   
   const fullText = responseText;
 
@@ -53,8 +52,6 @@ export default function App() {
     if (!queryToAsk) return;
 
     setIsSearching(true);
-    setIsWorkspaceVisible(true);
-    setSearchCount((prev) => prev + 1);
     setLastQuery(queryToAsk);
     setSearchQuery(""); // Clear for follow up
 
@@ -76,7 +73,7 @@ export default function App() {
         ]),
       ];
       setResponseWorksheets(worksheets);
-      setResponseText(stripWorksheetFromAnswer(res.answer, worksheets));
+      setResponseText(res.answer);
       setResponseSources(res.sources ?? []);
       setResponseClassified(res.classified ?? []);
       setResponseFrameworkRefs(res.framework_refs_used ?? []);
@@ -94,6 +91,10 @@ export default function App() {
 
 
 
+  if (!isAuthenticated) {
+    return <LandingPage onLogin={() => setIsAuthenticated(true)} />;
+  }
+
   return (
     <div 
       className="min-h-screen bg-white relative overflow-hidden font-sans"
@@ -104,6 +105,7 @@ export default function App() {
     >
       {/* Sidebar Toggle */}
       <motion.button
+        initial={false}
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         className="fixed top-6 left-6 text-[#173C7A] hover:opacity-70 z-[60]"
         animate={{ x: isSidebarOpen ? "12rem" : "0rem" }}
@@ -113,7 +115,7 @@ export default function App() {
       </motion.button>
 
       {/* Sidebar */}
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {isSidebarOpen && (
           <>
             <motion.div
@@ -161,34 +163,18 @@ export default function App() {
 
               <div className="mx-3 h-px bg-[#173C7A]/10 my-1.5" />
 
-              {/* Chat History */}
-              <div className="flex-1 overflow-y-auto p-3 space-y-0.5">
-                <div className="flex items-center justify-between mb-2 px-1">
-                  <h3 className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Recent Chats</h3>
-                  <button 
-                    onClick={() => { setIsSearching(false); setSearchQuery(""); }}
-                    className="text-[9px] font-semibold text-gray-400 uppercase tracking-wider bg-gray-100 hover:bg-[#306FB8] hover:text-white rounded-md px-1.5 py-0.5 transition-colors flex items-center"
-                  >
-                    New Chat
-                  </button>
-                </div>
-                <button className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-[13px] text-gray-600 hover:bg-gray-50 rounded-md transition-colors text-left truncate">
-                  <MessageSquare size={14} className="shrink-0" />
-                  Software Engineer transition
-                </button>
-                <button className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-[13px] text-gray-600 hover:bg-gray-50 rounded-md transition-colors text-left truncate">
-                  <MessageSquare size={14} className="shrink-0" />
-                  Product Manager roadmap
-                </button>
-                <button className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-[13px] text-gray-600 hover:bg-gray-50 rounded-md transition-colors text-left truncate">
-                  <MessageSquare size={14} className="shrink-0" />
-                  Interview prep strategies
-                </button>
-                <button className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-[13px] text-gray-600 hover:bg-gray-50 rounded-md transition-colors text-left truncate">
-                  <MessageSquare size={14} className="shrink-0" />
-                  Resume review feedback
+              <div className="px-3 pt-1">
+                <button 
+                  onClick={() => { setIsSearching(false); setSearchQuery(""); setCurrentView("pathfinder"); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all bg-gray-100 text-gray-700 hover:bg-gray-200"
+                >
+                  <MessageSquare size={16} />
+                  New Chat
                 </button>
               </div>
+
+              {/* Flex Spacer */}
+              <div className="flex-1" />
 
               {/* Profile Section */}
               <div className="p-3 border-t border-[#173C7A]/10 relative">
@@ -229,16 +215,8 @@ export default function App() {
                             Your Profile
                           </button>
                           <button className="w-full px-3 py-1.5 text-[13px] text-gray-700 hover:bg-gray-50 hover:text-[#306FB8] flex items-center gap-2.5 transition-colors text-left">
-                            <FileSearch size={14} />
-                            Career History
-                          </button>
-                          <button className="w-full px-3 py-1.5 text-[13px] text-gray-700 hover:bg-gray-50 hover:text-[#306FB8] flex items-center gap-2.5 transition-colors text-left">
                             <Settings size={14} />
                             Account Settings
-                          </button>
-                          <button className="w-full px-3 py-1.5 text-[13px] text-gray-700 hover:bg-gray-50 hover:text-[#306FB8] flex items-center gap-2.5 transition-colors text-left">
-                            <Shield size={14} />
-                            Privacy & Data
                           </button>
                         </div>
                         <div className="border-t border-[#173C7A]/10 py-1.5">
@@ -257,51 +235,30 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Top Right Navigation */}
-      <div className="fixed top-6 right-6 flex items-center gap-4 z-50 pointer-events-none">
-        {/* Supabase ask() call counter */}
-        <div
-          className="flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-[#173C7A]/15 text-[#173C7A] rounded-full pl-3 pr-1.5 py-1 shadow-sm pointer-events-auto"
-          title={`ask() Supabase function has been called ${searchCount} time${searchCount === 1 ? "" : "s"}`}
-        >
-          <Activity
-            size={14}
-            className={isAsking ? "text-[#306FB8] animate-pulse" : "text-[#306FB8]/70"}
-          />
-          <span className="text-xs font-medium tracking-wide hidden sm:inline">
-            ask calls
-          </span>
-          <AnimatePresence mode="popLayout">
-            <motion.span
-              key={searchCount}
-              initial={{ scale: 0.6, opacity: 0, y: -4 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.6, opacity: 0, y: 4 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="min-w-[1.5rem] h-6 inline-flex items-center justify-center px-2 rounded-full bg-[#306FB8] text-white text-xs font-semibold tabular-nums"
-            >
-              {searchCount}
-            </motion.span>
-          </AnimatePresence>
-        </div>
-      </div>
+
 
       {/* Main Content Area */}
       <motion.div 
         className="absolute inset-y-0 right-0 flex flex-col items-center"
+        initial={false}
         animate={{ left: isSidebarOpen ? "16rem" : "0rem" }}
         transition={{ duration: 0.2, ease: "easeOut" }}
       >
         {currentView === "pathfinder" ? (
           <>
             {/* LOGO */}
-            <div 
-              className="absolute z-50 transition-all duration-500 ease-in-out flex items-center gap-4"
-              style={{
+            <motion.div 
+              className="absolute z-50 flex items-center gap-4"
+              initial={false}
+              animate={{
                 left: "50%",
                 top: "50%",
-                transform: "translate(-50%, -120px)",
-                opacity: isSearching ? 0 : 1,
+                x: "-50%",
+                y: "-120px",
+                opacity: isSearching ? 0 : 1
+              }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              style={{
                 pointerEvents: isSearching ? "none" : "auto",
                 transformOrigin: "center"
               }}
@@ -312,7 +269,7 @@ export default function App() {
                 className="h-16 opacity-90 cursor-pointer transition-opacity hover:opacity-100" 
                 onClick={() => { setIsSearching(false); setSearchQuery(""); }} 
               />
-            </div>
+            </motion.div>
 
             {/* RESULTS AREA */}
             <AnimatePresence>
@@ -328,93 +285,10 @@ export default function App() {
                   transition={{ duration: 0.4, ease: "easeInOut" }}
                   className="absolute top-[120px] w-full max-w-5xl px-6 flex"
                   style={{
-                    gap: isWorkspaceVisible ? "3rem" : "0rem",
+                    gap: "0rem",
                     bottom: "220px",
                   }}
                 >
-                  {/* Sidebar with generic files */}
-                  <AnimatePresence mode="popLayout">
-                    {isWorkspaceVisible && (
-                      <motion.div 
-                        layout
-                        initial={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }} 
-                        animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }} 
-                        exit={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
-                        transition={{ duration: 0.4, ease: "easeInOut" }}
-                        className="w-1/3 flex flex-col gap-4 overflow-y-auto pr-1 min-h-0"
-                      >
-                        {(responseClassified.length > 0 || responseWasFiltered !== null || lastQuery) && (
-                          <motion.div
-                            layout
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="bg-white border border-[#173C7A]/10 p-4 rounded-xl shadow-sm"
-                          >
-                            <div className="flex items-center gap-2 mb-3">
-                              <Tags size={16} className="text-[#306FB8]" />
-                              <h4 className="text-[#173C7A] font-semibold text-sm">Query Classification</h4>
-                            </div>
-                            {lastQuery && (
-                              <p className="text-xs text-gray-500 mb-3 leading-relaxed line-clamp-3">
-                                &ldquo;{lastQuery}&rdquo;
-                              </p>
-                            )}
-                            {responseWasFiltered !== null && (
-                              <p className="text-xs text-gray-600 mb-3">
-                                Framework filter:{" "}
-                                <span className="font-medium text-[#173C7A]">
-                                  {responseWasFiltered ? "Applied" : "Not applied"}
-                                </span>
-                              </p>
-                            )}
-                            {responseClassified.length > 0 ? (
-                              <ul className="space-y-2">
-                                {responseClassified.map((item, i) => (
-                                  <li
-                                    key={`${item.phase}-${item.process}-${i}`}
-                                    className="text-xs bg-[#306FB8]/5 border border-[#306FB8]/15 rounded-lg px-3 py-2"
-                                  >
-                                    <p className="font-medium text-[#173C7A]">
-                                      Phase {item.phase}: {item.phase_name}
-                                    </p>
-                                    <p className="text-gray-600 mt-0.5">
-                                      Process {item.process}: {item.process_name}
-                                    </p>
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : !isAsking ? (
-                              <p className="text-xs text-gray-500">No framework match returned.</p>
-                            ) : (
-                              <p className="text-xs text-gray-500">Classifying…</p>
-                            )}
-                            {responseFrameworkRefs.length > 0 && (
-                              <div className="mt-3 pt-3 border-t border-[#173C7A]/10">
-                                <p className="text-[10px] uppercase tracking-wide text-gray-400 mb-1.5">
-                                  Framework refs used
-                                </p>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {responseFrameworkRefs.map((ref) => (
-                                    <span
-                                      key={ref}
-                                      className="text-[11px] font-mono bg-[#173C7A]/8 text-[#173C7A] px-2 py-0.5 rounded-md"
-                                    >
-                                      {ref}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </motion.div>
-                        )}
-
-
-
-
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
                   {/* Generative response text */}
                   <motion.div 
                     layout
@@ -433,17 +307,6 @@ export default function App() {
                           </span>
                           Archer AI Response
                         </h3>
-                        <button
-                          onClick={() => setIsWorkspaceVisible(!isWorkspaceVisible)}
-                          className="p-2 text-[#173C7A]/60 hover:text-[#173C7A] hover:bg-[#306FB8]/10 rounded-lg transition-colors flex items-center gap-2"
-                          title={isWorkspaceVisible ? "Hide Workspace" : "Show Workspace"}
-                        >
-                          {isWorkspaceVisible ? (
-                            <><Maximize2 size={18} /><span className="text-sm font-medium">Focus Chat</span></>
-                          ) : (
-                            <><Minimize2 size={18} /><span className="text-sm font-medium">Show Files</span></>
-                          )}
-                        </button>
                       </div>
                       {askError && (
                         <div className="mx-8 mt-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
@@ -461,65 +324,7 @@ export default function App() {
                                     isTyping={isAsking || typedText.length < fullText.length}
                                   />
                                 </div>
-                                {responseWorksheets.length > 0 &&
-                                  !isAsking &&
-                                  typedText.length >= fullText.length && (
-                                    <aside className="shrink-0 sm:pt-1">
-                                      <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-wider text-[#306FB8]/70">
-                                        Your next step
-                                      </p>
-                                      <div className="flex flex-wrap gap-3 sm:flex-col">
-                                        {responseWorksheets.map((url, i) => (
-                                          <AssignmentTile key={url} url={url} index={i} />
-                                        ))}
-                                      </div>
-                                    </aside>
-                                  )}
                               </div>
-                              {responseSources.length > 0 &&
-                                !isAsking &&
-                                typedText.length >= fullText.length && (
-                                  <div className="mt-8 pt-6 border-t border-[#173C7A]/10">
-                                    <div className="flex items-center gap-2 mb-4">
-                                      <BookOpen size={18} className="text-[#306FB8]" />
-                                      <h4 className="text-sm font-semibold text-[#173C7A]">
-                                        Sources ({responseSources.length})
-                                      </h4>
-                                    </div>
-                                    <ul className="space-y-3">
-                                      {responseSources.map((source) => (
-                                        <li
-                                          key={source.source}
-                                          className="bg-white border border-[#173C7A]/10 rounded-xl p-4 shadow-sm"
-                                        >
-                                          <div className="flex items-start justify-between gap-3">
-                                            <p className="text-sm font-medium text-[#173C7A] leading-snug">
-                                              {source.file}
-                                            </p>
-                                            <span className="shrink-0 text-[11px] font-mono text-[#306FB8] bg-[#306FB8]/10 px-2 py-0.5 rounded-md">
-                                              {(source.similarity * 100).toFixed(0)}%
-                                            </span>
-                                          </div>
-                                          {source.refs.length > 0 && (
-                                            <div className="flex flex-wrap gap-1.5 mt-2">
-                                              {source.refs.map((ref) => (
-                                                <span
-                                                  key={ref}
-                                                  className="text-[10px] font-mono text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded"
-                                                >
-                                                  {ref}
-                                                </span>
-                                              ))}
-                                            </div>
-                                          )}
-                                          <p className="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-3">
-                                            {source.preview}
-                                          </p>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
                             </>
                           ) : (
                             <div className="flex items-center gap-2 text-gray-500 text-[15px]">
@@ -536,14 +341,17 @@ export default function App() {
             </AnimatePresence>
 
             {/* SEARCH BAR */}
-            <div 
-              className="absolute z-40 px-6 transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] w-full"
-              style={{
+            <motion.div 
+              className="absolute z-40 px-6 w-full"
+              initial={false}
+              animate={{
                 left: "50%",
                 top: isSearching ? "calc(100% - 150px)" : "50%",
-                transform: "translate(-50%, -50%)",
+                x: "-50%",
+                y: "-50%",
                 maxWidth: isSearching ? "52rem" : "42rem"
               }}
+              transition={{ duration: 0.7, ease: [0.34, 1.56, 0.64, 1] }}
             >
               <div className={`relative w-full transition-transform duration-300 ${!isSearching && "hover:scale-[1.02]"}`}>
                 <textarea
@@ -565,8 +373,8 @@ export default function App() {
                       }, 0);
                     }
                   }}
-                  placeholder={isSearching ? "Ask a follow up question..." : "Search for career advice..."}
-                  className={`block w-full px-6 pr-16 border-2 border-[#173C7A] focus:outline-none focus:border-[#306FB8] focus:shadow-lg focus:shadow-[#306FB8]/20 bg-white shadow-md text-gray-800 resize-none overflow-hidden leading-[24px] ${
+                  placeholder={isSearching ? "Ask a new question..." : "Search for career advice..."}
+                  className={`block w-full px-6 pr-16 border-2 border-[#173C7A] focus:outline-none bg-white shadow-md text-gray-800 resize-none overflow-hidden leading-[24px] ${
                     (isSearching || searchQuery.includes('\n') || searchQuery.length > 50) ? "py-5 rounded-3xl h-[100px]" : "py-[14px] rounded-full h-[56px]"
                   }`}
                 />
@@ -582,7 +390,7 @@ export default function App() {
                   </svg>
                 </button>
               </div>
-            </div>
+            </motion.div>
           </>
         ) : (
           <Roadmap />

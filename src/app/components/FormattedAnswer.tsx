@@ -1,19 +1,89 @@
 import React from "react";
-import { AssignmentTile } from "./AssignmentTile";
-import { isAssignmentUrl } from "@/lib/assignmentLinks";
+import { getAssignmentTitle, isAssignmentUrl } from "@/lib/assignmentLinks";
 
 type InlineSegment =
   | { type: "text"; content: string }
   | { type: "bold"; content: string }
   | { type: "italic"; content: string }
   | { type: "code"; content: string }
-  | { type: "link"; content: string; href: string };
+  | { type: "link"; content: string; href: string }
+  | { type: "raw_link"; content: string; href: string };
+
+function AsyncLink({ url, fallbackText }: { url: string; fallbackText?: string }) {
+  const isUselessFallback = fallbackText
+    ? /^\d+$/.test(fallbackText.trim()) || /^https?:\/\//i.test(fallbackText.trim())
+    : true;
+
+  const defaultTitle =
+    !isUselessFallback && fallbackText
+      ? fallbackText
+      : isAssignmentUrl(url)
+      ? getAssignmentTitle(url)
+      : url;
+
+  const [title, setTitle] = React.useState<string>(defaultTitle);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchTitle = async () => {
+      try {
+        const res = await fetch(`https://api.microlink.io?url=${encodeURIComponent(url)}`);
+        const json = await res.json();
+        if (isMounted && json.status === "success" && json.data?.title) {
+          setTitle(json.data.title);
+        }
+      } catch (e) {
+        // Keep fallback title
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchTitle();
+    return () => {
+      isMounted = false;
+    };
+  }, [url]);
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-[#306FB8] hover:opacity-80 transition-opacity inline-flex items-center gap-1"
+    >
+      {loading ? (
+        <span className="inline-flex items-center opacity-70 italic text-[13px]">
+          <svg className="animate-spin h-3 w-3 mr-1.5" viewBox="0 0 24 24">
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="none"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
+          Fetching link...
+        </span>
+      ) : (
+        title
+      )}
+    </a>
+  );
+}
 
 function tokenizeInline(text: string): InlineSegment[] {
   const segments: InlineSegment[] = [];
-  // Order matters: links → code → bold → italic
+  // Order matters: links → code → bold → italic → raw_urls
   const pattern =
-    /(\[([^\]]+)\]\(([^)]+)\))|(\*\*([^*]+)\*\*)|(`([^`]+)`)|(\*([^*]+)\*)|(_([^_]+)_)/g;
+    /(\[([^\]]+)\]\(([^)]+)\))|(\*\*([^*]+)\*\*)|(`([^`]+)`)|(\*([^*]+)\*)|(_([^_]+)_)|(https?:\/\/[^\s>]+)/g;
 
   let lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -31,6 +101,8 @@ function tokenizeInline(text: string): InlineSegment[] {
       segments.push({ type: "italic", content: match[9] });
     } else if (match[10]) {
       segments.push({ type: "italic", content: match[11] });
+    } else if (match[12]) {
+      segments.push({ type: "raw_link", content: match[12], href: match[12] });
     }
     lastIndex = match.index + match[0].length;
   }
@@ -66,27 +138,9 @@ function renderInline(text: string): React.ReactNode[] {
           </code>
         );
       case "link":
-        if (isAssignmentUrl(seg.href)) {
-          return (
-            <AssignmentTile
-              key={i}
-              url={seg.href}
-              title={seg.content}
-              variant="inline"
-            />
-          );
-        }
-        return (
-          <a
-            key={i}
-            href={seg.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#306FB8] underline decoration-[#306FB8]/40 underline-offset-2 hover:decoration-[#306FB8] transition-colors"
-          >
-            {seg.content}
-          </a>
-        );
+        return <AsyncLink key={i} url={seg.href} fallbackText={seg.content} />;
+      case "raw_link":
+        return <AsyncLink key={i} url={seg.href} />;
       default:
         return <React.Fragment key={i}>{seg.content}</React.Fragment>;
     }
