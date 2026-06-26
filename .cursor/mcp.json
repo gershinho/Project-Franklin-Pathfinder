@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "supabase-archer": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=pzrxktspxxddhdmpwkeq"
+    }
+  }
+}
