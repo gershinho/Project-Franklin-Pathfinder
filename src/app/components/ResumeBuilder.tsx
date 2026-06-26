@@ -272,10 +272,11 @@ export function ResumeBuilder({ onClose }: Props) {
         <div className="flex-1 overflow-y-auto p-10 bg-gray-50/50 relative">
           {/* Dot grid background */}
           <div 
-            className="absolute inset-0 z-0 pointer-events-none opacity-10"
+            className="absolute inset-0 z-0 pointer-events-none"
             style={{
-              backgroundImage: "radial-gradient(#173C7A 1px, transparent 1px)",
-              backgroundSize: "24px 24px",
+              opacity: 0.0375,
+              backgroundImage: "radial-gradient(#173C7A 0.75px, transparent 0.75px)",
+              backgroundSize: "36px 36px",
             }}
           />
           <div
