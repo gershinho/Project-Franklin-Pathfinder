@@ -24,26 +24,6 @@ export type AskResponse = {
   worksheets?: string[];
 };
 
-/** Remove worksheet URLs from the answer body; keeps the AI's next-step task text. */
-export function stripWorksheetFromAnswer(
-  answer: string,
-  worksheets: string[]
-): string {
-  if (!worksheets.length) return answer;
-
-  let text = answer;
-  for (const url of worksheets) {
-    text = text.replaceAll(url, "");
-    const escaped = url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    text = text.replace(new RegExp(`\\[([^\\]]*)\\]\\(${escaped}\\)`, "gi"), "");
-  }
-  // Drop orphaned arrows that pointed at the worksheet link
-  text = text.replace(/\s*→\s*(?=\n|$)/g, "");
-  return text
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
 function formatSupabaseFunctionError(error: unknown): string {
   if (!(error && typeof error === "object")) {
     return String(error);
